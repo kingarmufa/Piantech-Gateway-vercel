@@ -1,0 +1,171 @@
+<%- include('partials/header', { title: 'Dokumentasi API' }) %>
+
+<div class="px-6 <%= user ? 'mt-4 pt-4' : '' %> max-w-[480px] md:max-w-3xl mx-auto mb-10">
+  
+  <!-- Judul Halaman -->
+  <div class="mb-4 border-b border-gray-200 pb-4">
+    <h1 class="text-xl font-medium text-gray-800">Dokumentasi API</h1>
+    <p class="text-xs font-medium text-gray-800 mt-1">Panduan lengkap integrasi API pembayaran untuk aplikasi Anda.</p>
+  </div>
+
+  <!-- A. Persiapan -->
+  <section class="mb-6">
+    <h2 class="text-lg font-medium text-gray-800 pb-2 border-b border-gray-100">A. Persiapan</h2>
+    <p class="text-xs font-medium text-gray-700 leading-relaxed mb-4">
+      Langkah pertama yang harus Anda lakukan adalah mendaftar dan login ke dashboard. Setelah itu, dapatkan API Key Anda di menu Profil untuk mulai mengintegrasikan sistem pembayaran ke aplikasi Anda.
+    </p>
+  </section>
+
+  <!-- B. Cek Saldo -->
+  <section class="mb-8">
+    <h2 class="text-lg font-medium text-gray-800 pb-2 border-b border-gray-100">B. Cek Saldo (Balance)</h2>
+    <p class="text-xs font-medium text-gray-700 leading-relaxed mb-4">
+      Gunakan endpoint ini untuk mendapatkan informasi saldo akun Anda secara <em>real-time</em>.
+    </p>
+    
+    <ul class="list-disc list-inside text-xs font-medium text-gray-700 space-y-1.5 ml-1 mb-4">
+      <li>Method: <span class="text-pink-600 font-medium">GET</span></li>
+      <li>URL: <code id="urlBalance" class="text-pink-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs ml-1">/api/v1/balance</code></li>
+    </ul>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Parameter:</p>
+    <ul class="list-disc list-inside text-xs font-medium text-gray-700 space-y-1 ml-4 mb-5">
+      <li><code class="text-pink-600 bg-gray-50 px-1 py-0.5 rounded border border-gray-200 font-mono text-xs">apikey</code> (string, wajib) – Kunci API pengguna</li>
+    </ul>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Contoh Request:</p>
+    <div class="relative bg-gray-50 border border-gray-300 rounded p-3 mb-4 group transition-all hover:border-gray-400">
+      <button onclick="copyCode(this)" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer" title="Salin">
+        <i class="far fa-copy text-xs"></i>
+      </button>
+      <pre class="text-xs font-medium font-mono text-gray-800 whitespace-pre-wrap break-all pr-8" id="exampleBalance">/api/v1/balance?apikey=YOUR_API_KEY</pre>
+    </div>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Contoh Response:</p>
+    <div class="relative bg-gray-900 border border-gray-700 rounded p-3 group">
+      <pre class="text-xs font-medium font-mono text-gray-200 whitespace-pre-wrap leading-relaxed">{
+  "balance": 150000
+}</pre>
+    </div>
+  </section>
+
+  <!-- C. Membuat Invoice Baru -->
+  <section class="mb-8">
+    <h2 class="text-lg font-medium text-gray-800 pb-2 border-b border-gray-100">C. Membuat Invoice Baru</h2>
+    <p class="text-xs font-medium text-gray-700 leading-relaxed mb-4">
+      Endpoint ini digunakan untuk meng-generate QRIS untuk transaksi/deposit baru. Kirimkan nominal dan API Key Anda di dalam URL.
+    </p>
+
+    <ul class="list-disc list-inside text-xs font-medium text-gray-700 space-y-1.5 ml-1 mb-4">
+      <li>Method: <span class="text-pink-600 font-medium">GET</span></li>
+      <li>URL: <code id="urlInvoice" class="text-pink-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs ml-1">/api/v1/invoice</code></li>
+    </ul>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Parameter:</p>
+    <ul class="list-disc list-inside text-xs font-medium text-gray-700 space-y-1 ml-4 mb-5">
+      <li><code class="text-pink-600 bg-gray-50 px-1 py-0.5 rounded border border-gray-200 font-mono text-xs">apikey</code> (string, wajib) – Kunci API pengguna</li>
+      <li><code class="text-pink-600 bg-gray-50 px-1 py-0.5 rounded border border-gray-200 font-mono text-xs">amount</code> (integer, wajib) – Nominal deposit (min. <%= typeof settings !== 'undefined' && settings.minDeposit ? settings.minDeposit.toLocaleString('id-ID') : '10.000' %>)</li>
+    </ul>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Contoh Request:</p>
+    <div class="relative bg-gray-50 border border-gray-300 rounded p-3 mb-4 group transition-all hover:border-gray-400">
+      <button onclick="copyCode(this)" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer" title="Salin">
+        <i class="far fa-copy text-xs"></i>
+      </button>
+      <pre class="text-xs font-medium font-mono text-gray-800 whitespace-pre-wrap break-all pr-8" id="exampleInvoice">/api/v1/invoice?apikey=YOUR_API_KEY&amount=50000</pre>
+    </div>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Contoh Response:</p>
+    <div class="relative bg-gray-900 border border-gray-700 rounded p-3 group">
+      <pre class="text-xs font-medium font-mono text-gray-200 whitespace-pre-wrap leading-relaxed">{
+  "success": true,
+  "invoice_id": "64c8d9e...",
+  "amount": 50000,
+  "fee": 500,
+  "total": 50500,
+  "qris_image": "https://...",
+  "expired_at": "2025-01-01 12:00:00"
+}</pre>
+    </div>
+  </section>
+
+  <!-- D. Cek Status Invoice -->
+  <section class="mb-4">
+    <h2 class="text-lg font-medium text-gray-800 pb-2 border-b border-gray-100">D. Cek Status Invoice</h2>
+    <p class="text-xs font-medium text-gray-700 leading-relaxed mb-4">
+      Setelah pengguna melakukan <em>scan</em> QRIS, gunakan endpoint ini untuk mengecek apakah pembayaran telah berhasil atau belum.
+    </p>
+
+    <ul class="list-disc list-inside text-xs font-medium text-gray-700 space-y-1.5 ml-1 mb-4">
+      <li>Method: <span class="text-pink-600 font-medium">GET</span></li>
+      <li>URL: <code id="urlStatus" class="text-pink-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 font-mono text-xs ml-1">/api/v1/invoice/status</code></li>
+    </ul>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Parameter:</p>
+    <ul class="list-disc list-inside text-xs font-medium text-gray-700 space-y-1 ml-4 mb-5">
+      <li><code class="text-pink-600 bg-gray-50 px-1 py-0.5 rounded border border-gray-200 font-mono text-xs">apikey</code> (string, wajib) – Kunci API pengguna</li>
+      <li><code class="text-pink-600 bg-gray-50 px-1 py-0.5 rounded border border-gray-200 font-mono text-xs">invoice_id</code> (string, wajib) – ID Invoice yang ingin dicek</li>
+    </ul>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Contoh Request:</p>
+    <div class="relative bg-gray-50 border border-gray-300 rounded p-3 mb-4 group transition-all hover:border-gray-400">
+      <button onclick="copyCode(this)" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 bg-transparent border-none cursor-pointer" title="Salin">
+        <i class="far fa-copy text-xs"></i>
+      </button>
+      <pre class="text-xs font-medium font-mono text-gray-800 whitespace-pre-wrap break-all pr-8" id="exampleStatus">/api/v1/invoice/status?apikey=YOUR_API_KEY&invoice_id=INSERT_ID_HERE</pre>
+    </div>
+
+    <p class="text-xs font-medium text-gray-700 mb-2">Contoh Response:</p>
+    <div class="relative bg-gray-900 border border-gray-700 rounded p-3 group">
+      <pre class="text-xs font-medium font-mono text-gray-200 whitespace-pre-wrap leading-relaxed">{
+  "invoice_id": "64c8d9e...",
+  "amount": 50000,
+  "fee": 500,
+  "total": 50500,
+  "status": "paid",
+  "qris_image": "https://...",
+  "expired_at": "2025-01-01 12:00:00",
+  "created_at": "2025-01-01 11:30:00"
+}</pre>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // Isi base URL dari halaman aktif
+  const baseUrl = window.location.origin;
+  
+  document.getElementById('urlBalance').textContent = baseUrl + '/api/v1/balance';
+  document.getElementById('exampleBalance').textContent = `${baseUrl}/api/v1/balance?apikey=YOUR_API_KEY`;
+  
+  document.getElementById('urlInvoice').textContent = baseUrl + '/api/v1/invoice';
+  document.getElementById('exampleInvoice').textContent = `${baseUrl}/api/v1/invoice?apikey=YOUR_API_KEY&amount=50000`;
+  
+  document.getElementById('urlStatus').textContent = baseUrl + '/api/v1/invoice/status';
+  document.getElementById('exampleStatus').textContent = `${baseUrl}/api/v1/invoice/status?apikey=YOUR_API_KEY&invoice_id=INSERT_ID_HERE`;
+
+  function copyCode(btn) {
+    const pre = btn.parentElement.querySelector('pre');
+    const text = pre ? (pre.innerText || pre.textContent) : '';
+    
+    navigator.clipboard.writeText(text).then(() => {
+      const icon = btn.querySelector('i');
+      icon.className = 'fas fa-check text-xs text-green-500';
+      setTimeout(() => { icon.className = 'far fa-copy text-xs'; }, 1500);
+    }).catch(() => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      const icon = btn.querySelector('i');
+      icon.className = 'fas fa-check text-xs text-green-500';
+      setTimeout(() => { icon.className = 'far fa-copy text-xs'; }, 1500);
+    });
+  }
+</script>
+
+<%- include('partials/footer') %>
