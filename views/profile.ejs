@@ -1,0 +1,426 @@
+<%- include('partials/header', { title: 'Profil' }) %>
+
+<style>
+  :root {
+    --blue-500: #3b82f6;
+    --blue-50: #eff6ff;
+  }
+  .text-blue-500 { color: var(--blue-500); }
+  .bg-blue-50 { background-color: var(--blue-50); }
+  
+  .custom-scroll::-webkit-scrollbar { width: 2px; height: 2px; }
+  .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+  .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+  .custom-scroll:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
+  
+  .detail-table td { padding: 10px 14px; border-bottom: 1px solid #dddddd; }
+  .detail-table tr:last-child td { border-bottom: none; }
+</style>
+
+<div class="max-w-3xl mx-auto px-6 mt-2 pt-6 pb-10">
+
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="bg-[#f0fdf4] border border-[#bbf7d0] text-[#16a34a] px-5 py-4 rounded-[2px] mb-6 text-xs font-medium flex items-center gap-3">
+      <p><%= success %></p>
+    </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] px-5 py-4 rounded-[2px] mb-6 text-xs font-medium flex items-center gap-3">
+      <p><%= error %></p>
+    </div>
+  <% } %>
+
+  <!-- Avatar & Upload -->
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-base font-medium text-gray-800">Profil</h1>
+  </div>
+
+  <div class="bg-[#f9f9f9] border border-[#dddddd] rounded-[2px] p-6 mb-6">
+    <div class="flex items-center gap-5">
+      <div class="relative">
+        <div id="avatarContainer" class="w-20 h-20 rounded-full overflow-hidden border-2 border-[#dddddd]">
+          <% if (user.profilePicture) { %>
+            <img src="<%= user.profilePicture %>" alt="Foto Profil" class="w-full h-full object-cover" id="profileImagePreview">
+          <% } else { %>
+            <div id="profileInitial" class="w-full h-full flex items-center justify-center text-white text-2xl font-medium" style="background-color: <%= user.profileColor || '#3b82f6' %>;">
+              <%= user.username.charAt(0).toUpperCase() %>
+            </div>
+          <% } %>
+        </div>
+        <label for="profileImageInput" class="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center cursor-pointer shadow-sm transition-colors">
+          <i class="fas fa-camera text-xs"></i>
+        </label>
+        <input type="file" id="profileImageInput" accept="image/*" class="hidden" />
+      </div>
+      <div>
+        <p class="text-sm font-medium text-gray-800"><%= user.username %></p>
+        <p class="text-xs font-medium text-gray-500"><%= user.email %></p>
+        <p id="uploadStatus" class="text-xs font-medium text-gray-400 mt-1 hidden"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Informasi Akun -->
+  <% 
+    let rawApiKey = '';
+    if (typeof apiKeys !== 'undefined' && apiKeys.length > 0) {
+      rawApiKey = apiKeys[0].key;
+    } else if (user.apiKey) {
+      rawApiKey = user.apiKey;
+    }
+    // Tampilkan sensor di tabel
+    let maskedApiKey = rawApiKey ? '••••••••' : 'Belum ada API Key';
+  %>
+  <div class="mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-medium text-gray-800">Informasi Data Akun</h2>
+      <button onclick="openEditInfoModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-[2px] text-xs font-medium transition-colors flex items-center gap-1.5">
+        <i class="fas fa-pen-to-square text-xs"></i> Edit Informasi
+      </button>
+    </div>
+
+    <table class="w-full text-xs text-left detail-table border border-[#dddddd] rounded-[2px]">
+      <tbody>
+        <tr>
+          <td class="w-1/3 text-xs font-medium text-gray-800 border-r border-[#dddddd]">Username</td>
+          <td class="text-xs font-medium text-gray-800 px-4"><%= user.username %></td>
+        </tr>
+        <tr>
+          <td class="text-xs font-medium text-gray-800 border-r border-[#dddddd]">Email</td>
+          <td class="text-xs font-medium text-gray-800 px-4"><%= user.email %></td>
+        </tr>
+        <tr>
+          <td class="text-xs font-medium text-gray-800 border-r border-[#dddddd]">API Key</td>
+          <td class="text-xs font-medium text-gray-800 px-4" id="tableApiKeyDisplay">
+            <%= maskedApiKey %>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Data Pencairan (E-Wallet) -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-medium text-gray-800">Data Pencairan (E-Wallet)</h2>
+      <button onclick="openEditWalletModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-[2px] text-xs font-medium transition-colors flex items-center gap-1.5">
+        <i class="fas fa-pen-to-square text-xs"></i> Edit Ewallet
+      </button>
+    </div>
+
+    <table class="w-full text-xs text-left detail-table border border-[#dddddd] rounded-[2px]">
+      <tbody>
+        <tr>
+          <td class="w-1/3 text-xs font-medium text-gray-800 border-r border-[#dddddd]">Metode</td>
+          <td class="text-xs font-medium text-gray-800 px-4"><%= user.ewallet || '-' %></td>
+        </tr>
+        <tr>
+          <td class="text-xs font-medium text-gray-800 border-r border-[#dddddd]">No. Rek/Akun</td>
+          <td class="text-xs font-medium text-gray-800 px-4"><%= user.accountNumber || '-' %></td>
+        </tr>
+        <tr>
+          <td class="text-xs font-medium text-gray-800 border-r border-[#dddddd]">Atas Nama</td>
+          <td class="text-xs font-medium text-gray-800 px-4"><%= user.accountName || '-' %></td>
+        </tr>
+        <% 
+          let currentFee = 0;
+          if (settings.withdrawMethods && settings.withdrawMethods.length > 0) {
+            const found = settings.withdrawMethods.find(m => m.name === user.ewallet);
+            if (found) currentFee = found.fee || 0;
+          }
+        %>
+        <tr>
+          <td class="text-xs font-medium text-gray-800 border-r border-[#dddddd]">Biaya Admin</td>
+          <td class="text-xs font-medium text-gray-800 px-4">Rp <%= currentFee.toLocaleString('id-ID') %></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Edit Informasi (termasuk API Key) -->
+  <div id="editInfoModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-6">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeEditInfoModal()"></div>
+    <div class="relative bg-white border border-[#dddddd] rounded-[2px] shadow-sm w-full max-w-sm">
+      <div class="px-5 py-3 border-b border-[#dddddd] flex items-center justify-between">
+        <h3 class="text-sm font-medium text-gray-800">Edit Informasi</h3>
+        <button onclick="closeEditInfoModal()" class="w-7 h-7 flex items-center justify-center rounded-[2px] text-gray-800 hover:bg-gray-100">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+      <div class="p-5">
+        <form method="POST" action="/profile" class="flex flex-col gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-2">Alamat Email</label>
+            <input name="email" type="email" value="<%= user.email %>" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-2">Password Baru <span class="text-gray-400">(opsional)</span></label>
+            <div class="relative">
+              <input id="newPassword" name="newPassword" type="password" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 pr-10 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="••••••••">
+              <button type="button" id="togglePassword" class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 text-gray-500 hover:text-gray-800 flex items-center justify-center">
+                <i id="toggleIcon" class="far fa-eye text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <!-- API Key Field dengan toggle, copy, dan generate ulang di pojok kanan atas -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-medium text-gray-700">API Key</label>
+              <button type="button" onclick="regenerateApiKeyFromModal(event)" class="text-xs font-medium text-blue-500 hover:text-blue-600 transition-colors bg-transparent border-0 cursor-pointer">
+                Generate Ulang
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <input id="modalApiKeyInput" type="password" readonly value="<%= rawApiKey %>" class="w-full bg-gray-100 border border-[#dddddd] rounded-[2px] px-3 py-3 pr-10 text-xs font-medium text-gray-800 outline-none">
+                <button type="button" id="toggleModalApiKey" class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 text-gray-500 hover:text-gray-800 flex items-center justify-center">
+                  <i id="modalApiKeyToggleIcon" class="far fa-eye text-xs"></i>
+                </button>
+              </div>
+              <!-- Hanya ikon, tanpa teks -->
+              <button type="button" onclick="copyApiKeyFromModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-3 rounded-[2px] text-xs font-medium transition-colors whitespace-nowrap" title="Salin API Key">
+                <i class="far fa-copy text-xs"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-[2px] text-xs font-medium transition-colors flex items-center justify-center gap-2">
+            <i class="fas fa-save text-xs"></i> Simpan Profil
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Edit Ewallet -->
+  <div id="editWalletModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-6">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeEditWalletModal()"></div>
+    <div class="relative bg-white border border-[#dddddd] rounded-[2px] shadow-sm w-full max-w-sm">
+      <div class="px-5 py-3 border-b border-[#dddddd] flex items-center justify-between">
+        <h3 class="text-sm font-medium text-gray-800">Edit Ewallet</h3>
+        <button onclick="closeEditWalletModal()" class="w-7 h-7 flex items-center justify-center rounded-[2px] text-gray-800 hover:bg-gray-100">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+      <div class="p-5">
+        <form method="POST" action="/profile" class="flex flex-col gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-2">Metode Pencairan</label>
+            <select id="ewalletSelect" name="ewallet" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer appearance-none">
+              <option value="" data-fee="0" <%= !user.ewallet ? 'selected' : '' %>>-- Pilih Metode --</option>
+              <% if (typeof settings !== 'undefined' && settings.withdrawMethods && settings.withdrawMethods.length > 0) { %>
+                <% settings.withdrawMethods.forEach(function(method) { %>
+                  <option value="<%= method.name %>" data-fee="<%= method.fee %>" <%= user.ewallet === method.name ? 'selected' : '' %>><%= method.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+            <p id="feeHelperText" class="text-xs font-medium text-gray-600 mt-2 flex items-center gap-1.5">
+              <i class="fas fa-info-circle text-blue-500 text-xs"></i> Biaya Admin: <span id="feeAmount" class="font-medium">Rp 0</span>
+            </p>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-2">Nomor Rekening / HP</label>
+            <input name="accountNumber" value="<%= user.accountNumber || '' %>" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Contoh: 081234567890">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-2">Nama Pemilik Akun</label>
+            <input name="accountName" value="<%= user.accountName || '' %>" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Sesuai di aplikasi / KTP">
+          </div>
+          <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-[2px] text-xs font-medium transition-colors flex items-center justify-center gap-2">
+            <i class="fas fa-credit-card text-xs"></i> Simpan Data Wallet
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ================== MODAL EDIT INFORMASI ==================
+  function openEditInfoModal() {
+    document.getElementById('editInfoModal').classList.remove('hidden');
+    // Isi input dengan nilai asli
+    const rawKey = '<%= rawApiKey.replace(/'/g, "\\'") %>';
+    document.getElementById('modalApiKeyInput').value = rawKey;
+    // Reset toggle ke mode password
+    document.getElementById('modalApiKeyInput').type = 'password';
+    document.getElementById('modalApiKeyToggleIcon').className = 'far fa-eye text-xs';
+  }
+  function closeEditInfoModal() {
+    document.getElementById('editInfoModal').classList.add('hidden');
+  }
+
+  // ================== MODAL EDIT EWALLET ==================
+  function openEditWalletModal() {
+    document.getElementById('editWalletModal').classList.remove('hidden');
+    updateFeeDisplay();
+  }
+  function closeEditWalletModal() {
+    document.getElementById('editWalletModal').classList.add('hidden');
+  }
+
+  // ================== TAMPILAN DINAMIS FEE ==================
+  const ewalletSelect = document.getElementById('ewalletSelect');
+  const feeAmount = document.getElementById('feeAmount');
+  
+  function updateFeeDisplay() {
+    if (!ewalletSelect) return;
+    const selectedOption = ewalletSelect.options[ewalletSelect.selectedIndex];
+    const fee = selectedOption.getAttribute('data-fee');
+    if (fee && ewalletSelect.value !== "") {
+      feeAmount.textContent = 'Rp ' + parseInt(fee).toLocaleString('id-ID');
+    } else {
+      feeAmount.textContent = 'Rp 0';
+    }
+  }
+
+  if (ewalletSelect) {
+    ewalletSelect.addEventListener('change', updateFeeDisplay);
+  }
+
+  // ================== UPLOAD FOTO PROFIL ==================
+  const profileImageInput = document.getElementById('profileImageInput');
+  const avatarContainer = document.getElementById('avatarContainer');
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  if (profileImageInput) {
+    profileImageInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Ukuran file maksimal 2 MB.');
+        profileImageInput.value = '';
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        alert('Hanya file gambar yang diizinkan.');
+        profileImageInput.value = '';
+        return;
+      }
+
+      uploadStatus.textContent = 'Mengunggah...';
+      uploadStatus.classList.remove('hidden');
+
+      const formData = new FormData();
+      formData.append('profileImage', file);
+
+      try {
+        const res = await fetch('/profile/upload', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          avatarContainer.innerHTML = `<img src="${data.profilePicture}?t=${Date.now()}" alt="Foto Profil" class="w-full h-full object-cover" id="profileImagePreview">`;
+          uploadStatus.textContent = 'Foto profil berhasil diperbarui!';
+          uploadStatus.className = 'text-xs font-medium text-[#16a34a] mt-1';
+        } else {
+          uploadStatus.textContent = data.error || 'Gagal mengunggah foto.';
+          uploadStatus.className = 'text-xs font-medium text-[#dc2626] mt-1';
+        }
+      } catch (err) {
+        uploadStatus.textContent = 'Terjadi kesalahan saat mengunggah.';
+        uploadStatus.className = 'text-xs font-medium text-[#dc2626] mt-1';
+      } finally {
+        setTimeout(() => {
+          uploadStatus.classList.add('hidden');
+        }, 3000);
+        profileImageInput.value = '';
+      }
+    });
+  }
+
+  // ================== TOGGLE PASSWORD BIASA ==================
+  document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('newPassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    if (togglePassword && passwordInput) {
+      togglePassword.addEventListener('click', function (e) {
+        e.preventDefault();
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        if (type === 'text') {
+          toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+          toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+      });
+    }
+
+    // ================== TOGGLE API KEY DI MODAL ==================
+    const toggleModalApiKey = document.getElementById('toggleModalApiKey');
+    const modalApiKeyInput = document.getElementById('modalApiKeyInput');
+    const modalApiKeyToggleIcon = document.getElementById('modalApiKeyToggleIcon');
+
+    if (toggleModalApiKey && modalApiKeyInput) {
+      toggleModalApiKey.addEventListener('click', function (e) {
+        e.preventDefault();
+        const type = modalApiKeyInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        modalApiKeyInput.setAttribute('type', type);
+        
+        if (type === 'text') {
+          modalApiKeyToggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+          modalApiKeyToggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+      });
+    }
+  });
+
+  // ================== REGENERATE API KEY (dari modal) ==================
+  async function regenerateApiKeyFromModal(event) {
+    const btn = event.target;
+    // Konfirmasi terlebih dahulu
+    if (!confirm('Apakah Anda yakin ingin membuat kunci API baru? Kunci yang lama tidak akan bisa digunakan lagi dan transaksi yang berjalan bisa terhenti.')) {
+      return;
+    }
+
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = '...';
+    
+    try {
+      const res = await fetch('/api/user/api-key/regenerate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      const data = await res.json();
+      
+      if (data.apiKey) {
+        // Update input di modal
+        document.getElementById('modalApiKeyInput').value = data.apiKey;
+        // Update tampilan di tabel utama (tetap sensor 8 titik)
+        document.getElementById('tableApiKeyDisplay').innerText = '••••••••';
+        alert('API Key berhasil diperbarui!');
+      } else {
+        alert(data.error || 'Gagal generate ulang API key');
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan saat generate ulang API key');
+    } finally {
+      btn.disabled = false;
+      btn.innerText = originalText;
+    }
+  }
+
+  // ================== COPY API KEY (dari modal) ==================
+  function copyApiKeyFromModal() {
+    const input = document.getElementById('modalApiKeyInput');
+    if (!input.value) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+      alert('API Key disalin ke clipboard');
+    }).catch(() => {
+      alert('Gagal menyalin');
+    });
+  }
+</script>
+
+<%- include('partials/footer') %>
