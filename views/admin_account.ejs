@@ -1,0 +1,251 @@
+<%- include('partials/header', { title: 'Pengaturan Akun Admin' }) %>
+
+<div class="px-6 pt-8 mt-4 max-w-[480px] md:max-w-lg mx-auto">
+
+  <!-- Alert Success -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-[2px] mb-4 text-xs font-medium flex items-center gap-3">
+      <div class="w-7 h-7 rounded-[2px] bg-green-100 flex items-center justify-center shrink-0">
+        <i class="fas fa-check-circle text-xs"></i>
+      </div>
+      <p><%= success %></p>
+    </div>
+  <% } %>
+
+  <!-- Alert Error -->
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-[2px] mb-4 text-xs font-medium flex items-center gap-3">
+      <div class="w-7 h-7 rounded-[2px] bg-red-100 flex items-center justify-center shrink-0">
+        <i class="fas fa-exclamation-circle text-xs"></i>
+      </div>
+      <p><%= error %></p>
+    </div>
+  <% } %>
+
+  <!-- ==================== CARD UTAMA ==================== -->
+  <div class="bg-white border border-[#dddddd] shadow-sm rounded-[2px] p-6 mb-6">
+
+    <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-6">
+      <h2 class="text-sm font-medium text-gray-800">Informasi Akun Admin</h2>
+    </div>
+
+    <!-- Avatar + Upload -->
+    <div class="flex flex-col items-center mb-6">
+      <div class="relative inline-block">
+        <div id="avatarContainer" class="w-24 h-24 rounded-full overflow-hidden border border-[#dddddd] bg-gray-100 shadow-sm">
+          <% if (admin.profilePicture) { %>
+            <img src="<%= admin.profilePicture %>" alt="Foto Profil" class="w-full h-full object-cover" id="profileImagePreview">
+          <% } else { %>
+            <div id="profileInitial" class="w-full h-full flex items-center justify-center text-white text-3xl font-medium bg-gray-400">
+              <%= admin.username.charAt(0).toUpperCase() %>
+            </div>
+          <% } %>
+        </div>
+
+        <label for="profileImageInput" class="absolute bottom-0 right-0 w-8 h-8 bg-gray-700 hover:bg-gray-800 text-white rounded-full flex items-center justify-center cursor-pointer shadow-md transition-transform hover:scale-105 duration-200 border-2 border-white">
+          <i class="fas fa-camera text-[10px]"></i>
+        </label>
+        <input type="file" id="profileImageInput" accept="image/*" class="hidden" />
+      </div>
+      <p id="uploadStatus" class="text-xs font-medium text-gray-400 mt-3 hidden"></p>
+    </div>
+
+    <!-- Tabel Data Admin -->
+    <div class="mb-5">
+      <table class="w-full text-xs border-collapse border border-gray-300">
+        <tbody>
+          <tr>
+            <td class="px-3 py-2 border border-gray-300 bg-gray-100 font-medium text-gray-600 w-28">Username</td>
+            <td class="px-3 py-2 border border-gray-300 text-gray-800 font-medium"><%= admin.username %></td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 border border-gray-300 bg-gray-100 font-medium text-gray-600">Email</td>
+            <td class="px-3 py-2 border border-gray-300 text-gray-800 font-medium"><%= admin.email %></td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 border border-gray-300 bg-gray-100 font-medium text-gray-600">Password</td>
+            <td class="px-3 py-2 border border-gray-300 text-gray-800 font-medium">••••••••</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tombol Edit Informasi -->
+    <button onclick="openEditAdminModal()" class="bg-blue-500 hover:bg-blue-600 text-white w-full px-4 py-3 rounded-[2px] text-xs font-medium shadow-sm transition-all flex items-center justify-center gap-2">
+      <i class="fas fa-pen-to-square text-xs"></i> Edit Informasi
+    </button>
+  </div>
+</div>
+
+<!-- ===================== MODAL EDIT ADMIN ===================== -->
+<div id="editAdminModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeEditAdminModal()"></div>
+  <div class="relative bg-white shadow-xl overflow-hidden w-full max-w-md transform transition-all scale-95 opacity-0 duration-200 rounded-[2px] flex flex-col max-h-[90vh]" id="editAdminModalContent">
+    <div class="bg-white px-5 py-4 relative flex items-center justify-between border-b border-gray-200 shrink-0">
+      <h2 class="text-sm font-medium text-gray-800">Edit Informasi Admin</h2>
+      <button onclick="closeEditAdminModal()" class="w-7 h-7 flex items-center justify-center rounded-[2px] text-gray-500 hover:text-gray-700 transition-colors">
+        <i class="fas fa-times text-xs"></i>
+      </button>
+    </div>
+    <div class="p-5 overflow-y-auto custom-scroll">
+      <form id="editAdminForm" method="POST" action="/admin/account" class="flex flex-col gap-4" autocomplete="off">
+        <!-- Username -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-2">Username</label>
+          <div class="flex items-center bg-gray-50 border border-[#dddddd] rounded-[2px] p-1.5 transition-all focus-within:border-gray-500 focus-within:ring-1 focus-within:ring-gray-500">
+            <input name="username" type="text" value="<%= admin.username %>" placeholder="Masukkan username..." 
+                   class="flex-1 bg-transparent px-3 py-2 text-xs font-medium text-gray-800 outline-none w-full placeholder:text-xs placeholder:font-medium placeholder:text-gray-400" 
+                   maxlength="15" pattern="[^\s]+" title="Username tidak boleh mengandung spasi" required>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1.5">Maksimal 15 karakter, tanpa spasi, huruf kecil otomatis.</p>
+        </div>
+
+        <!-- Password Baru -->
+        <div>
+          <label class="flex items-center justify-between text-xs font-medium text-gray-700 mb-2">
+            <span>Kata Sandi Baru</span>
+            <span class="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-[2px] border border-gray-200">opsional</span>
+          </label>
+          <div class="flex items-center bg-gray-50 border border-[#dddddd] rounded-[2px] p-1 transition-all focus-within:border-gray-500 focus-within:ring-1 focus-within:ring-gray-500">
+            <input id="newPasswordModal" name="newPassword" type="password" placeholder="••••••••" 
+                   class="flex-1 bg-transparent px-3 py-2 text-xs font-medium text-gray-800 outline-none w-full placeholder:text-xs placeholder:font-medium placeholder:text-gray-400">
+            <button type="button" onclick="togglePassword('newPasswordModal', 'newPasswordToggleIcon')" class="w-10 h-10 text-gray-500 hover:text-gray-800 rounded-[2px] transition-all flex items-center justify-center shrink-0 ml-1">
+              <i id="newPasswordToggleIcon" class="far fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Password Saat Ini -->
+        <div>
+          <label class="flex items-center gap-1 text-xs font-medium text-gray-700 mb-2">
+            <span>Kata Sandi Saat Ini</span>
+            <span class="text-red-500">*</span>
+          </label>
+          <div class="flex items-center bg-gray-50 border border-[#dddddd] rounded-[2px] p-1 transition-all focus-within:border-gray-500 focus-within:ring-1 focus-within:ring-gray-500">
+            <input id="currentPasswordModal" name="password" type="password" placeholder="Masukkan kata sandi saat ini..." 
+                   class="flex-1 bg-transparent px-3 py-2 text-xs font-medium text-gray-800 outline-none w-full placeholder:text-xs placeholder:font-medium placeholder:text-gray-400" required>
+            <button type="button" onclick="togglePassword('currentPasswordModal', 'currentPasswordToggleIcon')" class="w-10 h-10 text-gray-500 hover:text-gray-800 rounded-[2px] transition-all flex items-center justify-center shrink-0 ml-1">
+              <i id="currentPasswordToggleIcon" class="far fa-eye text-xs"></i>
+            </button>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1.5">Wajib diisi untuk otorisasi perubahan akun.</p>
+        </div>
+
+        <!-- Tombol Simpan -->
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-full px-4 py-3 rounded-[2px] text-xs font-medium shadow-sm transition-all flex items-center justify-center gap-2 mt-2">
+          <i class="fas fa-save text-xs"></i> Simpan Perubahan
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
+
+<script>
+  // ================== NOTIFIKASI VIA TOAST ==================
+  <% if (typeof success !== 'undefined' && success) { %>
+    document.addEventListener('DOMContentLoaded', function() {
+      showToast('<%= success %>', 'success');
+    });
+  <% } %>
+  <% if (typeof error !== 'undefined' && error) { %>
+    document.addEventListener('DOMContentLoaded', function() {
+      showToast('<%= error %>', 'error');
+    });
+  <% } %>
+
+  // ================== UPLOAD FOTO PROFIL ADMIN ==================
+  const profileImageInput = document.getElementById('profileImageInput');
+  const avatarContainer = document.getElementById('avatarContainer');
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  if (profileImageInput) {
+    profileImageInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Ukuran file maksimal 2 MB.');
+        profileImageInput.value = '';
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        alert('Hanya file gambar yang diizinkan.');
+        profileImageInput.value = '';
+        return;
+      }
+
+      uploadStatus.textContent = 'Mengunggah...';
+      uploadStatus.classList.remove('hidden');
+      uploadStatus.classList.remove('text-green-600', 'text-red-600');
+      uploadStatus.classList.add('text-gray-500');
+
+      const formData = new FormData();
+      formData.append('profileImage', file);
+
+      try {
+        const res = await fetch('/profile/upload', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          avatarContainer.innerHTML = `<img src="${data.profilePicture}?t=${Date.now()}" alt="Foto Profil" class="w-full h-full object-cover" id="profileImagePreview">`;
+          uploadStatus.textContent = 'Foto profil berhasil diperbarui!';
+          uploadStatus.classList.replace('text-gray-500', 'text-green-600');
+        } else {
+          uploadStatus.textContent = data.error || 'Gagal mengunggah foto.';
+          uploadStatus.classList.replace('text-gray-500', 'text-red-600');
+        }
+      } catch (err) {
+        uploadStatus.textContent = 'Terjadi kesalahan saat mengunggah.';
+        uploadStatus.classList.replace('text-gray-500', 'text-red-600');
+      } finally {
+        setTimeout(() => {
+          uploadStatus.classList.add('hidden');
+          uploadStatus.classList.remove('text-green-600', 'text-red-600', 'text-gray-500');
+        }, 3000);
+        profileImageInput.value = '';
+      }
+    });
+  }
+
+  // ================== MODAL EDIT ADMIN ==================
+  function openEditAdminModal() {
+    const modal = document.getElementById('editAdminModal');
+    const modalContent = document.getElementById('editAdminModalContent');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      modalContent.classList.remove('scale-95', 'opacity-0');
+      modalContent.classList.add('scale-100', 'opacity-100');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEditAdminModal() {
+    const modal = document.getElementById('editAdminModal');
+    const modalContent = document.getElementById('editAdminModalContent');
+    modalContent.classList.remove('scale-100', 'opacity-100');
+    modalContent.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }, 200);
+  }
+
+  // ================== TOGGLE PASSWORD ==================
+  function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  }
+</script>
