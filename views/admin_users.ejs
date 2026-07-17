@@ -1,0 +1,303 @@
+<%- include('partials/header', { title: 'Kelola User' }) %>
+
+<style>
+  .custom-scroll::-webkit-scrollbar { width: 2px; height: 2px; }
+  .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+  .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+  .custom-scroll:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
+</style>
+
+<div class="max-w-3xl mt-4 mx-auto px-6 pt-6 pb-10">
+
+  <!-- Search -->
+  <div class="bg-[#f9f9f9] border border-[#dddddd] rounded-[2px] p-4 mb-6">
+    <div class="max-w-xs mx-auto">
+      <input id="searchInput" type="text" placeholder="Cari username..." 
+             class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-2.5 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-xs placeholder:font-medium placeholder:text-gray-400"
+             value="<%= typeof search !== 'undefined' ? search : '' %>" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Tabel Pengguna -->
+  <% if (users.length === 0) { %>
+    <div class="bg-white border border-[#dddddd] rounded-[2px] p-8 text-center">
+      <p class="text-sm font-medium text-gray-600">Belum ada pengguna terdaftar</p>
+    </div>
+  <% } else { %>
+    <div class="bg-white border border-[#dddddd] rounded-[2px] overflow-hidden">
+      <div class="overflow-x-auto custom-scroll" style="max-height: 500px;">
+        <table class="w-full text-xs text-left whitespace-nowrap font-medium">
+          <thead class="bg-[#f9f9f9] text-xs text-gray-800 font-medium border-b border-[#dddddd] sticky top-0 z-10">
+            <tr>
+              <th class="px-3 py-2.5 font-medium">Username</th>
+              <th class="px-3 py-2.5 font-medium">Saldo</th>
+              <th class="px-3 py-2.5 font-medium">Tanggal Daftar</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#dddddd] font-medium">
+            <% users.forEach(u => { 
+                 // Hapus semua perhitungan tanggal
+            %>
+            <tr class="hover:bg-gray-50 transition-colors user-row"
+                data-id="<%= u._id %>"
+                data-username="<%= u.username %>"
+                data-email="<%= u.email %>"
+                data-balance="<%= u.balance %>"
+                data-suspended="<%= u.suspended %>"
+                data-created="<%= u.createdAt.toISOString() %>">
+              <td class="px-3 py-3 text-gray-800">
+                <span class="text-xs font-medium"><%= u.username %></span>
+                <button type="button" onclick="event.stopPropagation(); window.location.hash = 'edit-user-' + this.closest('tr').dataset.id;" class="ml-2 text-blue-500 hover:text-blue-700 transition-colors">
+                  <i class="fas fa-pen-to-square text-xs"></i>
+                </button>
+              </td>
+              <td class="px-3 py-3 text-gray-800">Rp <%= u.balance.toLocaleString('id-ID') %></td>
+              <td class="px-3 py-3 text-gray-800 date-cell" data-timestamp="<%= u.createdAt.toISOString() %>"></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<!-- ===================== MODAL EDIT USER ===================== -->
+<div id="editUserModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeEditUserModal()"></div>
+  <div class="relative bg-white border border-[#dddddd] rounded-[2px] shadow-sm w-full max-w-md transform transition-all scale-95 opacity-0 duration-200 flex flex-col max-h-[90vh]" id="editUserModalContent">
+    <div class="px-5 py-3 border-b border-[#dddddd] flex items-center justify-between shrink-0">
+      <h2 class="text-sm font-medium text-gray-800">Edit Pengguna</h2>
+      <button onclick="closeEditUserModal()" class="w-7 h-7 flex items-center justify-center rounded-[2px] text-gray-500 hover:text-gray-700 transition-colors"><i class="fas fa-times text-sm"></i></button>
+    </div>
+    <div class="p-5 overflow-y-auto custom-scroll">
+      <form id="editUserForm" method="POST" action="" class="space-y-4">
+        <!-- Username -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Username</label>
+          <input name="username" id="editUsername" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+        </div>
+        <!-- Email -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+          <input name="email" type="email" id="editEmail" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+        </div>
+        <!-- Password Baru (opsional) -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Password Baru <span class="text-gray-400">(opsional)</span></label>
+          <input name="password" type="password" id="editPassword" placeholder="••••••••" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-xs placeholder:font-medium placeholder:text-gray-400">
+        </div>
+        <!-- Saldo -->
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Saldo (Rp)</label>
+          <input type="text" id="editBalanceDisplay" class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-3 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" oninput="formatEditBalance(this)">
+          <input type="hidden" name="balance" id="editBalanceReal">
+        </div>
+        <!-- Suspend -->
+        <div class="flex items-center gap-3 py-2">
+          <input type="checkbox" name="suspended" id="editSuspended" class="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-blue-500">
+          <label for="editSuspended" class="text-xs font-medium text-gray-700">Suspend (Tangguhkan) Akun</label>
+        </div>
+        <!-- Tombol Simpan -->
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-[2px] text-xs font-medium transition-colors flex items-center justify-center gap-2">
+          <i class="fas fa-save text-xs"></i> Simpan Perubahan
+        </button>
+      </form>
+      <!-- Tombol Hapus -->
+      <div class="mt-4 pt-4 border-t border-[#dddddd]">
+        <button type="button" onclick="confirmDeleteUser()" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-[2px] text-xs font-medium transition-colors flex items-center justify-center gap-2">
+          <i class="fas fa-trash-alt text-xs"></i> Hapus Pengguna
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL KONFIRMASI HAPUS ===================== -->
+<div id="deleteConfirmModal" class="fixed inset-0 z-[160] hidden flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeDeleteConfirmModal()"></div>
+  <div class="relative bg-white border border-[#dddddd] rounded-[2px] shadow-sm w-full max-w-sm transform transition-all scale-95 opacity-0 duration-200" id="deleteConfirmContent">
+    <div class="px-5 py-3 border-b border-[#dddddd] flex items-center justify-between">
+      <h3 class="text-sm font-medium text-gray-800">Konfirmasi Hapus</h3>
+      <button onclick="closeDeleteConfirmModal()" class="w-7 h-7 flex items-center justify-center rounded-[2px] text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xs"></i></button>
+    </div>
+    <div class="p-5">
+      <p class="text-xs font-medium text-gray-600 mb-4">Apakah Anda yakin ingin menghapus pengguna ini? Data akan hilang secara permanen.</p>
+      <div class="flex gap-3">
+        <button onclick="closeDeleteConfirmModal()" class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-[2px] text-xs transition-colors border border-[#dddddd]">Batal</button>
+        <form id="deleteUserForm" method="POST" action="" class="flex-1 m-0">
+          <button type="submit" class="w-full px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-[2px] text-xs transition-colors">Ya, Hapus</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===================== FORMAT TANGGAL DI SISI KLIEN =====================
+  function formatDateCell(cell) {
+    const timestamp = cell.dataset.timestamp;
+    if (!timestamp) return;
+    const d = new Date(timestamp);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const dateNum = String(d.getDate()).padStart(2, '0');
+    const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+    cell.textContent = `${year}-${month}-${dateNum} ${timeStr}`;
+  }
+
+  // ===================== HELPER =====================
+  function getUserDataFromRow(row) {
+    return {
+      id: row.dataset.id,
+      username: row.dataset.username,
+      email: row.dataset.email,
+      balance: row.dataset.balance,
+      suspended: row.dataset.suspended === 'true',
+      created: row.dataset.created
+    };
+  }
+
+  function formatEditBalance(input) {
+    let raw = input.value.replace(/\D/g, '');
+    document.getElementById('editBalanceReal').value = raw;
+    input.value = raw ? Number(raw).toLocaleString('id-ID') : '';
+  }
+
+  // ===================== MODAL EDIT (Hash Router) =====================
+  function openEditModalWithData(user) {
+    document.getElementById('editUsername').value = user.username;
+    document.getElementById('editEmail').value = user.email;
+    document.getElementById('editBalanceDisplay').value = Number(user.balance).toLocaleString('id-ID');
+    document.getElementById('editBalanceReal').value = user.balance;
+    document.getElementById('editSuspended').checked = user.suspended;
+    document.getElementById('editUserForm').action = '/admin/users/' + user.id + '/edit';
+
+    const modal = document.getElementById('editUserModal');
+    const content = document.getElementById('editUserModalContent');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEditUserModal() {
+    if (window.location.hash.startsWith('#edit-user-')) {
+      history.back(); // akan memicu hashchange dan menyembunyikan modal
+    } else {
+      hideEditModalUI();
+    }
+  }
+
+  function hideEditModalUI() {
+    const modal = document.getElementById('editUserModal');
+    const content = document.getElementById('editUserModalContent');
+    if (content) {
+      content.classList.remove('scale-100', 'opacity-100');
+      content.classList.add('scale-95', 'opacity-0');
+    }
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }, 200);
+  }
+
+  // ===================== MODAL KONFIRMASI HAPUS =====================
+  function confirmDeleteUser() {
+    const userId = document.getElementById('editUserForm').action.split('/').pop(); // ambil ID dari action
+    if (!userId) return;
+    document.getElementById('deleteUserForm').action = '/admin/users/' + userId + '/delete';
+    
+    const modal = document.getElementById('deleteConfirmModal');
+    const content = document.getElementById('deleteConfirmContent');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+
+  function closeDeleteConfirmModal() {
+    const modal = document.getElementById('deleteConfirmModal');
+    const content = document.getElementById('deleteConfirmContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 200);
+  }
+
+  // ===================== HASH ROUTER =====================
+  function handleHashChange() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#edit-user-')) {
+      const userId = hash.replace('#edit-user-', '');
+      const row = document.querySelector(`tr.user-row[data-id="${userId}"]`);
+      if (row) {
+        const user = getUserDataFromRow(row);
+        hideDeleteConfirmIfNeeded();
+        openEditModalWithData(user);
+      } else {
+        // ID tidak ditemukan, hapus hash
+        history.replaceState(null, null, window.location.pathname + window.location.search);
+      }
+    } else {
+      // Sembunyikan modal jika hash tidak cocok
+      hideEditModalUI();
+      hideDeleteConfirmIfNeeded();
+    }
+  }
+
+  function hideDeleteConfirmIfNeeded() {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (!modal.classList.contains('hidden')) {
+      closeDeleteConfirmModal();
+    }
+  }
+
+  window.addEventListener('hashchange', handleHashChange);
+  window.addEventListener('popstate', function() {
+    if (!window.location.hash.startsWith('#edit-user-')) {
+      hideEditModalUI();
+      hideDeleteConfirmIfNeeded();
+    }
+  });
+
+  // Klik di luar modal untuk tutup
+  document.getElementById('editUserModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditUserModal();
+  });
+  document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteConfirmModal();
+  });
+
+  // Inisialisasi: format semua tanggal dan jika sudah ada hash saat load, buka modal
+  document.addEventListener('DOMContentLoaded', function() {
+    // Format semua sel tanggal di tabel
+    document.querySelectorAll('.date-cell').forEach(formatDateCell);
+
+    if (window.location.hash.startsWith('#edit-user-')) {
+      handleHashChange();
+    }
+  });
+
+  // ===================== SEARCH (QUERY STRING) =====================
+  (() => {
+    const input = document.getElementById('searchInput');
+    if (!input) return;
+    let timer;
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (input.value) params.set('search', input.value);
+        else params.delete('search');
+        window.location.search = params.toString();
+      }, 500);
+    });
+  })();
+</script>
+
+<%- include('partials/footer') %>
