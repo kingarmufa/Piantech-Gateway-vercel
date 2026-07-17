@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff" />
+  <title><%= typeof title !== 'undefined' ? title + ' - ' + settings.name : settings.name %></title>
+  
+  <% if (settings.description) { %>
+  <meta name="description" content="<%= settings.description %>">
+  <% } %>
+  
+  <% if (settings.logoUrl) { %>
+  <link rel="icon" type="image/jpeg" href="<%= settings.logoUrl %>">
+  <% } %>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">  
+  <script>
+    tailwind.config = { 
+      theme: { 
+        extend: { 
+          fontFamily: { 
+            'sans': ['Inter', 'sans-serif']
+          }
+        } 
+      } 
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+    body { 
+      position: relative; 
+      background: #ffff; 
+      color: #1f2937;
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif !important;
+      padding-top: 60px; 
+    }
+
+    @media (max-width: 1023px) {
+      body { padding-top: 90px; } 
+    }
+
+    .fixed-navbar {
+      top: 0; left: 0; width: 100%; z-index: 40; 
+      background: #ffffff;
+      position: fixed; 
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .hamburger-checkbox, .user-dropdown-checkbox { display: none; }
+
+    /* Sidebar Kiri */
+    .mobile-menu {
+      position: fixed; top: 60px; left: -320px; width: 200px; height: calc(100vh - 60px); 
+      background: #374151; 
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 45; overflow-y: auto; 
+      padding-top: 2rem; padding-bottom: 2rem;
+      box-shadow: 4px 0 15px rgba(0,0,0,0.1); 
+    }
+    
+    .hamburger-checkbox:checked ~ .mobile-menu { left: 0; }
+    
+    .mobile-menu-overlay {
+      position: fixed; top: 60px; left: 0; width: 100%; height: calc(100vh - 60px);
+      background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px);
+      z-index: 44; opacity: 0; visibility: hidden; transition: all 0.3s ease; cursor: pointer;
+    }
+    .hamburger-checkbox:checked ~ .mobile-menu-overlay { opacity: 1; visibility: visible; }
+
+    .desktop-menu { display: none; }
+    @media (min-width: 1024px) { .desktop-menu { display: flex; } }
+
+    /* ✅ Animasi ikon panah menu mobile */
+    .menu-toggle-icon {
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+    .hamburger-checkbox:checked ~ nav .menu-toggle-icon {
+      transform: rotate(180deg);
+    }
+  </style>
+</head>
+<body>
+
+<% const isAdmin = (typeof user !== 'undefined' && user && user.role === 'admin'); %>
+
+<input type="checkbox" class="hamburger-checkbox" id="hamburger-toggle">
+
+<nav class="fixed-navbar">
+  <div class="max-w-7xl mx-auto flex justify-between items-center h-[60px] px-6 md:px-6">
+    <a href="/" class="flex items-center gap-2.5 text-[17px] font-medium text-gray-800 tracking-tight">
+      <% if (settings.logoUrl) { %>
+        <img src="<%= settings.logoUrl %>" alt="Logo" class="w-8 h-8 rounded-sm object-cover border border-gray-200" />
+      <% } else { %>
+        <div class="w-8 h-8 rounded bg-[#dc2626] flex items-center justify-center text-white font-bold text-sm">
+          <i class="fa-solid fa-p"></i>
+        </div>
+      <% } %>
+      <span class="text-base font-medium"><%= settings.name %></span>
+    </a>
+
+    <!-- Jika user SUDAH login, tampilkan menu user -->
+    <% if (user) { %>
+    <div class="relative">
+      <input type="checkbox" id="user-menu-toggle" class="user-dropdown-checkbox peer">
+      
+      <label for="user-menu-toggle" class="flex items-center gap-1.5 text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded border border-transparent peer-checked:border-gray-200 transition-all select-none">
+        <%= user.name || user.username || 'USER' %> 
+        <i class="fa-solid fa-caret-down text-[11px] mt-[1px]"></i>
+      </label>
+
+      <label for="user-menu-toggle" class="fixed inset-0 z-40 hidden peer-checked:block"></label>
+
+      <div class="absolute right-0 top-[110%] mt-1 w-32 bg-white border border-gray-200 shadow-lg hidden peer-checked:block z-50">
+        <a href="<%= isAdmin ? "/admin/account" : "/profile" %>" class="block px-4 py-2.5 text-[13.5px] font-medium text-gray-600 transition-colors">
+          Profil
+        </a>
+        <a href="/logout" class="block px-4 py-2.5 text-[13.5px] font-medium text-[#dc2626] bg-white hover:bg-gray-50 transition-colors">
+          Logout
+        </a>
+      </div>
+    </div>
+    
+    <!-- Jika user BELUM login, tampilkan tombol Mulai Sekarang -->
+    <% } else { %>
+    <a href="/login" class="bg-blue-500 text-white px-5 py-2 text-xs font-medium transition-colors shadow-sm flex items-center gap-2">
+      Login <i class="fas fa-arrow-right text-xs"></i>
+    </a>
+    <% } %>
+  </div>
+
+  <% if (user) { %>
+  <label for="hamburger-toggle" class="w-full bg-[#374151] flex justify-center items-center h-[40px] text-[13px] font-medium text-gray-100 cursor-pointer shadow-inner">
+     <span class="menu-toggle-icon text-xs font-medium">〉</span> Menu
+  </label>
+  <% } %>
+</nav>
+
+<% if (user) { %>
+<label for="hamburger-toggle" class="mobile-menu-overlay"></label>
+
+<div id="mobile-navigation-links" class="mobile-menu">
+  <div class="flex flex-col gap-0.5 px-3 text-[14px] font-normal">
+    
+    <% if (user.role === 'admin') { %>
+      <a href="/admin/dashboard" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-house w-6 text-center text-gray-400"></i> Dashboard
+      </a>
+      <a href="/admin/users" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-users w-6 text-center text-gray-400"></i> Kelola User
+      </a>
+      <a href="/admin/withdraw" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-circle-arrow-down w-6 text-center text-gray-400"></i> Kelola Withdraw
+      </a>
+      <a href="/admin/transactions" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-money-bill-1 w-6 text-center text-gray-400"></i> Transaksi User
+      </a>
+      <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-gear w-6 text-center text-gray-400"></i> Settings
+      </a>
+    <% } else { %>
+      <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-house w-6 text-center text-gray-400"></i> Dashboard 
+      </a>
+      <a href="/deposit" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-money-bill-1 w-6 text-center text-gray-400"></i> Transaksi
+      </a>
+      <a href="/withdraw" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-circle-arrow-down w-6 text-center text-gray-400"></i> Penarikan
+      </a>
+      <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-user w-6 text-center text-gray-400"></i> Profil
+      </a>
+      
+      <div class="h-px bg-gray-600/50 my-1 mx-2"></div>
+
+      <a href="/docs" class="flex items-center gap-3 px-3 py-2.5 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-all">
+        <i class="fa-solid fa-bars-staggered w-6 text-center text-gray-400"></i> Panduan API↗
+      </a>
+    <% } %>
+  </div>
+</div>
+<% } %>
+
+<main class="max-w-[480px] md:max-w-6xl mx-auto py-0">
+  <!-- Konten halaman -->
