@@ -1,0 +1,59 @@
+</main>
+
+<footer class="bg-[#374151] text-white py-5 px-4 text-center">
+  <p class="text-xs font-medium">
+    Butuh Bantuan? 
+    <p class="text-xs font-medium text-blue-400">Hubungi Tim Support 
+    (<a href="<%= settings.channelWhatsApp %>" class="underline hover:text-gray-300 transition-colors">via telegram</a>)
+    </p>
+  </p>
+</footer>
+<div id="toastContainer"></div>
+<script>
+  function showToast(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    
+    // 1. Menentukan tema warna berdasarkan parameter 'type'
+    let themeClasses = '';
+    if (type === 'success') {
+      themeClasses = 'bg-green-100 border-green-400 text-green-800'; // Tema Hijau
+    } else if (type === 'error') {
+      themeClasses = 'bg-red-100 border-red-400 text-red-800';       // Tema Merah
+    } else {
+      themeClasses = 'bg-gray-200 border-gray-300 text-gray-900';    // Tema Default (Info/Abu-abu)
+    }
+    
+    // 2. Mengubah posisi menjadi di tengah (left-1/2 dan -translate-x-1/2)
+    // Menambahkan w-[90%] agar ada jarak margin di layar HP yang kecil
+    toast.className = `fixed top-[80px] left-1/2 w-[90%] max-w-[400px] border px-4 py-3 rounded-lg flex items-center sm:items-center gap-2 z-[1000] shadow-sm transform -translate-x-1/2 -translate-y-[150px] opacity-0 transition-all duration-500 font-medium text-xs ${themeClasses}`;
+    
+    // Pemilihan ikon
+    const iconClass = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    
+    // Struktur HTML Toast
+    // Menambahkan 'shrink-0' pada <i> agar ikon tidak mengecil saat teks sangat panjang
+    // Menambahkan 'leading-relaxed' pada <span> agar jarak antar baris teks lebih rapi
+    toast.innerHTML = `
+      <i class="fas ${iconClass} text-xl shrink-0 mt-0.5 sm:mt-0"></i>
+      <span class="text-xs font-medium leading-relaxed">${msg}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Animasi masuk (turun dari atas ke tengah)
+    setTimeout(() => { 
+      toast.classList.remove('-translate-y-[150px]', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+    }, 10);
+    
+    // Animasi keluar (kembali naik ke atas)
+    setTimeout(() => { 
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('-translate-y-[150px]', 'opacity-0');
+      setTimeout(() => toast.remove(), 500); 
+    }, 5500);
+  }
+</script>
+</body>
+</html>
