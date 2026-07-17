@@ -1,0 +1,435 @@
+<%- include('partials/header', { title: 'Semua Transaksi' }) %>
+
+<style>
+  .custom-scroll::-webkit-scrollbar { width: 2px; height: 2px; }
+  .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+  .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+  .custom-scroll:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
+</style>
+
+<div class="max-w-3xl mt-4 mx-auto px-6 pt-6 pb-6">
+
+  <!-- Search & Filter -->
+  <div class="bg-[#f9f9f9] border border-[#dddddd] rounded-[2px] p-4 mb-6 space-y-3">
+    <div class="max-w-xs mx-auto">
+      <input id="searchInput" type="text" placeholder="Cari ID Invoice..." 
+             class="w-full bg-white border border-[#dddddd] rounded-[2px] px-3 py-2.5 text-xs font-medium text-gray-800 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-xs placeholder:font-medium placeholder:text-gray-400"
+             value="<%= typeof search !== 'undefined' ? search : '' %>">
+    </div>
+
+    <div class="relative max-w-xs mx-auto" id="filterDropdownContainer">
+      <button type="button" id="filterButton" class="w-full bg-white border border-[#dddddd] rounded-[2px] text-gray-700 px-3 py-2.5 text-xs font-medium text-left flex justify-between items-center">
+        <span id="activeFilterText">Semua Status</span>
+        <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+      </button>
+
+      <div id="filterMenu" class="absolute left-0 right-0 mt-1 bg-white border border-[#dddddd] rounded-[2px] shadow-sm py-1 hidden z-50">
+        <button type="button" data-val="all" class="filter-option w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-100 flex justify-between items-center">Semua <i class="fas fa-check text-blue-500 check-icon text-xs"></i></button>
+        <button type="button" data-val="deposit" class="filter-option w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-100 flex justify-between items-center">Deposit <i class="fas fa-check text-blue-500 check-icon text-xs hidden"></i></button>
+        <button type="button" data-val="withdraw" class="filter-option w-full text-left px-3 py-2 text-xs font-medium hover:bg-gray-100 flex justify-between items-center">Withdraw <i class="fas fa-check text-blue-500 check-icon text-xs hidden"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabel Transaksi -->
+  <div class="bg-white border border-[#dddddd] rounded-[2px] overflow-hidden mb-8">
+    <div class="overflow-x-auto custom-scroll" style="max-height: 500px;">
+      <table class="w-full text-xs text-left whitespace-nowrap font-medium">
+        <thead class="bg-[#f9f9f9] text-xs text-gray-800 font-medium border-b border-[#dddddd] sticky top-0 z-10">
+          <tr>
+            <th class="px-3 py-2.5 font-medium">ID Invoice</th>
+            <th class="px-3 py-2.5 font-medium">Jumlah</th>
+            <th class="px-3 py-2.5 font-medium">Status</th>
+            <th class="px-3 py-2.5 font-medium">Tanggal</th>
+          </tr>
+        </thead>
+        <tbody id="transactionTableBody" class="divide-y divide-[#dddddd] font-medium">
+          <% if (transactions.length === 0) { %>
+            <tr id="emptyTrxState"><td colspan="4" class="px-4 py-12 text-center"><div class="flex flex-col items-center justify-center"><p class="text-sm font-medium text-gray-600">Tidak ada transaksi</p></div></td></tr>
+          <% } else { %>
+            <% transactions.forEach(t => { 
+                 // Hapus semua perhitungan formattedDate
+                 let statusText = '', statusColor = '';
+                 if (t.status === 'paid' || t.status === 'success') {
+                   statusText = t.status === 'paid' ? 'paid' : 'completed';
+                   statusColor = 'text-blue-500';
+                 } else if (t.status === 'pending') {
+                   statusText = 'pending';
+                   statusColor = 'text-[#eab308]';
+                 } else if (t.status === 'expired' || t.status === 'rejected') {
+                   statusText = t.status === 'rejected' ? 'rejected' : 'expired';
+                   statusColor = 'text-[#dc2626]';
+                 } else {
+                   statusText = 'pending';
+                   statusColor = 'text-[#eab308]';
+                 }
+            %>
+            <tr class="trx-row hover:bg-gray-50 cursor-pointer transition-colors border-b border-[#dddddd]"
+                data-id="<%= t.reference || t._id %>"
+                data-type="<%= t.type %>"
+                data-amount="<%= t.amount %>"
+                data-fee="<%= t.fee %>"
+                data-status="<%= t.status %>"
+                data-created="<%= t.createdAt.toISOString() %>"
+                data-expired="<%= t.expiredAt ? t.expiredAt.toISOString() : '' %>"
+                data-username="<%= t.userId?.username || 'Pengguna Dihapus' %>"
+                data-email="<%= t.userId?.email || '' %>"
+                data-method="<%= t.method || '' %>"
+                data-account="<%= t.accountNumber || '' %>"
+                data-name="<%= t.accountName || '' %>"
+                data-note="<%= t.adminNote || '' %>"
+                data-qris="<%= t.qris_image || '' %>"
+                data-completed="<%= t.completedAt ? t.completedAt.toISOString() : '' %>"
+                onclick="window.location.hash = 'transactions-' + this.dataset.id">
+              <td class="px-3 py-3"><span class="text-xs font-medium text-blue-500 underline"><%= t.reference %></span></td>
+              <td class="px-3 py-3 text-gray-800">Rp <%= Math.abs(t.amount).toLocaleString('id-ID') %></td>
+              <td class="px-3 py-3"><span class="text-xs font-medium <%= statusColor %>"><%= statusText %></span></td>
+              <td class="px-3 py-3 text-gray-800 date-cell" data-timestamp="<%= t.createdAt.toISOString() %>"></td>
+            </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+    <div id="emptyState" class="hidden py-12 text-center flex flex-col items-center justify-center border-t border-[#dddddd]">
+      <p class="text-sm font-medium text-gray-600">Tidak ada transaksi ditemukan</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL DEPOSIT -->
+<div id="invoiceModalFull" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeInvoiceModalFull()"></div>
+  <div class="relative bg-white border border-[#dddddd] rounded-[2px] shadow-sm w-full max-w-md transform transition-all scale-95 opacity-0 duration-200 flex flex-col max-h-[90vh]" id="invoiceModalContent">
+    <div class="px-5 py-3 border-b border-[#dddddd] flex items-center justify-between shrink-0">
+      <h2 class="text-sm font-medium text-gray-800">Detail Transaksi</h2>
+      <button onclick="closeInvoiceModalFull()" class="w-7 h-7 flex items-center justify-center rounded-[2px] text-gray-500 hover:text-gray-700 transition-colors"><i class="fas fa-times text-xs"></i></button>
+    </div>
+    <div class="p-5 overflow-y-auto custom-scroll">
+      <table class="w-full text-xs border-collapse border border-[#dddddd] mb-4">
+        <tbody>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800 w-32">Tipe</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullType">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800 w-32">ID Transaksi</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800 break-all" id="modalFullInvoiceId">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Pengguna</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullUsername">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Email</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullEmail">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Status</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullStatus">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Tanggal</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullTanggal">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Expired</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullExpired">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Nominal</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullNominal">Rp 0</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Biaya Admin</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullFee">Rp 0</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Total</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullTotal">Rp 0</td></tr>
+          <tr id="modalFullCompletedRow" class="hidden"><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Waktu Selesai</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullCompleted">-</td></tr>
+          <tr id="modalFullNoteRow" class="hidden"><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Catatan Admin</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullNote">-</td></tr>
+        </tbody>
+      </table>
+      <div id="modalFullDynamicContent" class="flex justify-center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL WITHDRAW -->
+<div id="withdrawModalFull" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeWithdrawModalFull()"></div>
+  <div class="relative bg-white border border-[#dddddd] rounded-[2px] shadow-sm w-full max-w-md transform transition-all scale-95 opacity-0 duration-200 flex flex-col max-h-[90vh]" id="withdrawModalContent">
+    <div class="px-5 py-3 border-b border-[#dddddd] flex items-center justify-between shrink-0">
+      <h2 class="text-sm font-medium text-gray-800">Detail Penarikan</h2>
+      <button onclick="closeWithdrawModalFull()" class="w-7 h-7 flex items-center justify-center rounded-[2px] text-gray-500 hover:text-gray-700 transition-colors"><i class="fas fa-times text-xs"></i></button>
+    </div>
+    <div class="p-5 overflow-y-auto custom-scroll">
+      <table class="w-full text-xs border-collapse border border-[#dddddd] mb-4">
+        <tbody>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800 w-32">Tipe</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawType">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800 w-32">ID Penarikan</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800 break-all" id="modalFullWithdrawId">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Pengguna</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawUsername">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Email</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawEmail">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Status</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawStatus">-</td></tr>
+          <tr id="modalFullWithdrawAdminNoteRow" class="hidden"><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Keterangan</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawAdminNote"></td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Tanggal</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawTanggal">-</td></tr>
+          <tr id="modalFullWithdrawCompletedRow" class="hidden"><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Tanggal Selesai</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawCompleted">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Nominal</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawNominal">Rp 0</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Biaya Admin</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawFee">Rp 0</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Total Terpotong</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawTotalPotong">Rp 0</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Total Diterima</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawDiterima">Rp 0</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Metode</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawMethod">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">No. Rekening</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawAccount">-</td></tr>
+          <tr><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800">Atas Nama</td><td class="px-3 py-2 border border-[#dddddd] font-medium text-gray-800" id="modalFullWithdrawName">-</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===================== FORMAT TANGGAL DI SISI KLIEN =====================
+  function formatDateCell(cell) {
+    const timestamp = cell.dataset.timestamp;
+    if (!timestamp) return;
+    const d = new Date(timestamp);
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dayName = days[d.getDay()];
+    const dateNum = String(d.getDate()).padStart(2, '0');
+    const timeStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+    cell.textContent = `${dayName} ${dateNum}, ${timeStr}`;
+  }
+
+  // ===================== FILTER & SEARCH =====================
+  const filterButton = document.getElementById('filterButton');
+  const filterMenu = document.getElementById('filterMenu');
+  const searchInput = document.getElementById('searchInput');
+  let isFilterOpen = false;
+
+  filterButton.addEventListener('click', function(e) {
+    e.stopPropagation();
+    isFilterOpen = !isFilterOpen;
+    filterMenu.classList.toggle('hidden', !isFilterOpen);
+  });
+
+  document.addEventListener('click', function(event) {
+    if (!filterButton.contains(event.target) && !filterMenu.contains(event.target)) {
+      isFilterOpen = false;
+      filterMenu.classList.add('hidden');
+    }
+  });
+
+  document.querySelectorAll('.filter-option').forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const val = this.dataset.val;
+      const text = this.innerText.trim().split(' ')[0]; 
+      selectFilter(val, text);
+    });
+  });
+
+  window.selectFilter = (val, text) => {
+    document.getElementById('activeFilterText').innerText = text;
+    document.querySelectorAll('.filter-option').forEach(btn => {
+      const icon = btn.querySelector('.check-icon');
+      if (btn.dataset.val === val) {
+        icon.classList.remove('hidden');
+      } else {
+        icon.classList.add('hidden');
+      }
+    });
+    applyCurrentFilter();
+    isFilterOpen = false;
+    filterMenu.classList.add('hidden');
+  };
+
+  function applyCurrentFilter() {
+    const searchText = searchInput.value.trim().toLowerCase();
+    const activeFilterText = document.getElementById('activeFilterText').innerText;
+    const rows = document.querySelectorAll('.trx-row');
+    let visible = 0;
+
+    if (activeFilterText === 'Semua' || activeFilterText === 'Semua Status') {
+      rows.forEach(r => {
+        const id = (r.dataset.id || '').toLowerCase();
+        const show = searchText === '' || id.includes(searchText);
+        r.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+    } else {
+      const filterMap = { 'Deposit': 'deposit', 'Withdraw': 'withdraw' };
+      const val = filterMap[activeFilterText];
+      if (!val) return;
+      rows.forEach(row => {
+        const type = row.dataset.type;
+        const id = (row.dataset.id || '').toLowerCase();
+        const typeMatch = type === val;
+        const searchMatch = searchText === '' || id.includes(searchText);
+        const show = typeMatch && searchMatch;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+    }
+
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.classList.toggle('hidden', visible > 0);
+  }
+
+  searchInput.addEventListener('input', applyCurrentFilter);
+
+  // ===================== MODAL DETAIL DEPOSIT =====================
+  function openDepositModal(transactionData) {
+    document.getElementById('modalFullType').innerHTML = '<span class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-[2px]"><i class="fas fa-arrow-down text-[10px]"></i> Deposit</span>';
+    document.getElementById('modalFullInvoiceId').innerText = transactionData.id;
+    document.getElementById('modalFullUsername').innerText = transactionData.username || '-';
+    document.getElementById('modalFullEmail').innerText = transactionData.email || '-';
+
+    const amount = parseInt(transactionData.amount) || 0;
+    const fee = parseInt(transactionData.fee) || 0;
+    const total = amount + fee;
+    document.getElementById('modalFullNominal').innerText = `Rp ${amount.toLocaleString('id-ID')}`;
+    document.getElementById('modalFullFee').innerText = `Rp ${fee.toLocaleString('id-ID')}`;
+    document.getElementById('modalFullTotal').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+
+    let statusText = '', statusColor = '';
+    const st = transactionData.status;
+    if (st === 'paid' || st === 'success') { statusText = st === 'paid' ? 'paid' : 'completed'; statusColor = 'text-blue-500'; }
+    else if (st === 'pending') { statusText = 'pending'; statusColor = 'text-[#eab308]'; }
+    else if (st === 'expired' || st === 'rejected') { statusText = st === 'rejected' ? 'rejected' : 'expired'; statusColor = 'text-[#dc2626]'; }
+    else { statusText = 'pending'; statusColor = 'text-[#eab308]'; }
+    document.getElementById('modalFullStatus').innerHTML = `<span class="text-xs font-medium ${statusColor}">${statusText}</span>`;
+
+    const createdDate = new Date(transactionData.created);
+    const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const dayName = days[createdDate.getDay()];
+    const dateNum = String(createdDate.getDate()).padStart(2,'0');
+    const month = String(createdDate.getMonth() + 1).padStart(2,'0');
+    const year = createdDate.getFullYear();
+    const time = createdDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+    document.getElementById('modalFullTanggal').innerText = `${dayName} ${dateNum}/${month}/${year}, ${time}`;
+
+    if (transactionData.expired) {
+      const expDate = new Date(transactionData.expired);
+      const expDayName = days[expDate.getDay()];
+      const expDateNum = String(expDate.getDate()).padStart(2,'0');
+      const expMonth = String(expDate.getMonth() + 1).padStart(2,'0');
+      const expYear = expDate.getFullYear();
+      const expTime = expDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+      document.getElementById('modalFullExpired').innerText = `${expDayName} ${expDateNum}/${expMonth}/${expYear}, ${expTime}`;
+    } else document.getElementById('modalFullExpired').innerText = '-';
+
+    if (transactionData.completed) {
+      const compDate = new Date(transactionData.completed);
+      const compDayName = days[compDate.getDay()];
+      const compDateNum = String(compDate.getDate()).padStart(2,'0');
+      const compMonth = String(compDate.getMonth() + 1).padStart(2,'0');
+      const compYear = compDate.getFullYear();
+      const compTime = compDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+      document.getElementById('modalFullCompleted').innerText = `${compDayName} ${compDateNum}/${compMonth}/${compYear}, ${compTime}`;
+      document.getElementById('modalFullCompletedRow').classList.remove('hidden');
+    } else document.getElementById('modalFullCompletedRow').classList.add('hidden');
+
+    if (transactionData.note && transactionData.note.trim() !== '') {
+      document.getElementById('modalFullNote').innerText = transactionData.note;
+      document.getElementById('modalFullNoteRow').classList.remove('hidden');
+    } else document.getElementById('modalFullNoteRow').classList.add('hidden');
+
+    const dynamicDiv = document.getElementById('modalFullDynamicContent');
+    if (st === 'pending' && transactionData.qris) {
+      dynamicDiv.innerHTML = `<div class="flex flex-col items-center mt-4"><div class="p-3 bg-white border border-[#dddddd] rounded-[2px] shadow-sm mb-3"><img src="${transactionData.qris}" class="w-48 h-48 object-contain rounded-[2px]" alt="QRIS" onerror="this.onerror=null; this.outerHTML='<div class=\\'w-48 h-48 flex items-center justify-center bg-gray-100 rounded-[2px] text-xs font-medium text-gray-500\\'>QR tidak tersedia</div>';"></div><p class="text-xs font-medium text-gray-800">Scan QR Code di atas</p><p class="text-xs font-medium text-gray-500 mt-1 text-center max-w-xs">Gunakan E-Wallet atau Mobile Banking Untuk Melakukan Pembayaran.</p></div>`;
+    } else dynamicDiv.innerHTML = '';
+
+    const modal = document.getElementById('invoiceModalFull');
+    const modalContent = document.getElementById('invoiceModalContent');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modalContent.classList.remove('scale-95', 'opacity-0'); modalContent.classList.add('scale-100', 'opacity-100'); }, 10);
+    document.body.style.overflow = 'hidden';
+  }
+  function closeInvoiceModalFull() { if (window.location.hash.startsWith('#transactions-')) history.back(); else hideInvoiceModalUI(); }
+  function hideInvoiceModalUI() {
+    const modal = document.getElementById('invoiceModalFull');
+    const modalContent = document.getElementById('invoiceModalContent');
+    if (modalContent) { modalContent.classList.remove('scale-100', 'opacity-100'); modalContent.classList.add('scale-95', 'opacity-0'); }
+    setTimeout(() => { modal.classList.add('hidden'); document.body.style.overflow = ''; }, 200);
+  }
+
+  // ===================== MODAL DETAIL WITHDRAW =====================
+  function openWithdrawModal(transactionData) {
+    document.getElementById('modalFullWithdrawType').innerHTML = '<span class="inline-flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-[2px]"><i class="fas fa-arrow-up text-[10px]"></i> Withdraw</span>';
+    document.getElementById('modalFullWithdrawId').innerText = transactionData.id;
+    document.getElementById('modalFullWithdrawUsername').innerText = transactionData.username || '-';
+    document.getElementById('modalFullWithdrawEmail').innerText = transactionData.email || '-';
+
+    const formatOpts = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+    const created = new Date(transactionData.created);
+    document.getElementById('modalFullWithdrawTanggal').innerText = created.toLocaleString('id-ID', formatOpts).replace(/\./g, ':');
+
+    if (transactionData.completed) {
+      const compDate = new Date(transactionData.completed);
+      document.getElementById('modalFullWithdrawCompleted').innerText = compDate.toLocaleString('id-ID', formatOpts).replace(/\./g, ':');
+      document.getElementById('modalFullWithdrawCompletedRow').classList.remove('hidden');
+    } else document.getElementById('modalFullWithdrawCompletedRow').classList.add('hidden');
+
+    const adminNoteRow = document.getElementById('modalFullWithdrawAdminNoteRow');
+    const adminNoteEl = document.getElementById('modalFullWithdrawAdminNote');
+    if (
+      (transactionData.status === 'expired' || transactionData.status === 'rejected') &&
+      transactionData.note &&
+      transactionData.note.trim() !== ''
+    ) {
+      adminNoteEl.innerText = transactionData.note;
+      adminNoteRow.classList.remove('hidden');
+    } else {
+      adminNoteRow.classList.add('hidden');
+    }
+
+    const nominal = Math.abs(parseInt(transactionData.amount)) || 0;
+    const fee = parseInt(transactionData.fee) || 0;
+    const totalPotong = nominal + fee;
+    document.getElementById('modalFullWithdrawNominal').innerText = `Rp ${nominal.toLocaleString('id-ID')}`;
+    document.getElementById('modalFullWithdrawFee').innerText = `Rp ${fee.toLocaleString('id-ID')}`;
+    document.getElementById('modalFullWithdrawTotalPotong').innerText = `Rp ${totalPotong.toLocaleString('id-ID')}`;
+    document.getElementById('modalFullWithdrawDiterima').innerText = `Rp ${nominal.toLocaleString('id-ID')}`;
+
+    let statusHTML = '';
+    const st = transactionData.status;
+    if (st === 'paid' || st === 'success') statusHTML = `<span class="text-xs font-medium text-blue-500">${st === 'paid' ? 'paid' : 'completed'}</span>`;
+    else if (st === 'pending') statusHTML = '<span class="text-xs font-medium text-[#eab308]">pending</span>';
+    else statusHTML = `<span class="text-xs font-medium text-[#dc2626]">${st === 'rejected' ? 'rejected' : 'expired'}</span>`;
+    document.getElementById('modalFullWithdrawStatus').innerHTML = statusHTML;
+
+    document.getElementById('modalFullWithdrawMethod').innerText = transactionData.method || '-';
+    document.getElementById('modalFullWithdrawAccount').innerText = transactionData.account || '-';
+    document.getElementById('modalFullWithdrawName').innerText = transactionData.name || '-';
+
+    const modal = document.getElementById('withdrawModalFull');
+    const modalContent = document.getElementById('withdrawModalContent');
+    modal.classList.remove('hidden');
+    setTimeout(() => { modalContent.classList.remove('scale-95', 'opacity-0'); modalContent.classList.add('scale-100', 'opacity-100'); }, 10);
+    document.body.style.overflow = 'hidden';
+  }
+  function closeWithdrawModalFull() { if (window.location.hash.startsWith('#transactions-')) history.back(); else hideWithdrawModalUI(); }
+  function hideWithdrawModalUI() {
+    const modal = document.getElementById('withdrawModalFull');
+    const modalContent = document.getElementById('withdrawModalContent');
+    if (modalContent) { modalContent.classList.remove('scale-100', 'opacity-100'); modalContent.classList.add('scale-95', 'opacity-0'); }
+    setTimeout(() => { modal.classList.add('hidden'); document.body.style.overflow = ''; }, 200);
+  }
+
+  // ===================== HASH ROUTER =====================
+  function getTransactionDataFromRow(row) {
+    return {
+      id: row.dataset.id,
+      type: row.dataset.type,
+      amount: row.dataset.amount,
+      fee: row.dataset.fee,
+      status: row.dataset.status,
+      created: row.dataset.created,
+      expired: row.dataset.expired || null,
+      username: row.dataset.username,
+      email: row.dataset.email,
+      method: row.dataset.method,
+      account: row.dataset.account,
+      name: row.dataset.name,
+      note: row.dataset.note,
+      qris: row.dataset.qris,
+      completed: row.dataset.completed || null
+    };
+  }
+  function handleTransactionRouter() {
+    const hash = window.location.hash;
+    if (!hash.startsWith('#transactions-')) return;
+    const transactionId = hash.replace('#transactions-', '');
+    const row = document.querySelector(`.trx-row[data-id="${transactionId}"]`);
+    if (!row) { hideInvoiceModalUI(); hideWithdrawModalUI(); history.replaceState(null, null, window.location.pathname + window.location.search); return; }
+    const data = getTransactionDataFromRow(row);
+    if (data.type === 'withdraw') { hideInvoiceModalUI(); openWithdrawModal(data); }
+    else { hideWithdrawModalUI(); openDepositModal(data); }
+  }
+  window.addEventListener('hashchange', handleTransactionRouter);
+  window.addEventListener('popstate', function() {
+    if (!window.location.hash.startsWith('#transactions-')) { hideInvoiceModalUI(); hideWithdrawModalUI(); }
+  });
+
+  // ===================== INIT =====================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Format semua sel tanggal di tabel
+    document.querySelectorAll('.date-cell').forEach(formatDateCell);
+    applyCurrentFilter();
+    if (window.location.hash.startsWith('#transactions-')) handleTransactionRouter();
+  });
+</script>
+
+<%- include('partials/footer') %>
