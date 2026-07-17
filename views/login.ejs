@@ -1,0 +1,96 @@
+<%- include('partials/header', { title: 'Masuk' }) %>
+
+<style>
+  :root {
+    --blue-500: #3b82f6;
+    --blue-50: #eff6ff;
+  }
+  .text-blue-500 { color: var(--blue-500); }
+  .bg-blue-50 { background-color: var(--blue-50); }
+</style>
+
+<div class="bg-[#f9f9f9] border border-[#dddddd] rounded-[2px] px-6 mx-6 mt-2 mb-10 py-6 min-h-[75vh] flex flex-col items-center justify-center">
+  
+  <!-- Logo / Ikon -->
+  <div class="text-center mb-8">
+    <% if (settings.logoUrl) { %>
+      <img src="<%= settings.logoUrl %>" alt="Logo" class="w-14 h-14 rounded-[2px] object-cover mx-auto mb-4 border border-[#dddddd]">
+    <% } else { %>
+      <div class="w-14 h-14 rounded-[2px] bg-blue-50 text-blue-500 flex items-center justify-center text-xl mx-auto mb-4 border border-[#dddddd]">
+        <!-- Ikon dihapus -->
+      </div>
+    <% } %>
+    <h2 class="text-lg font-medium text-gray-800">Masuk ke Dashboard</h2>
+  </div>
+
+  <!-- Alert Error -->
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="w-full max-w-md bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] px-5 py-4 rounded-[2px] mb-6 text-xs font-medium flex items-center gap-3">
+      <p><%= error %></p>
+    </div>
+  <% } %>
+  
+  <!-- Alert Success -->
+  <% if (typeof success !== 'undefined' && success) { %>
+    <div class="w-full max-w-md bg-[#f0fdf4] border border-[#bbf7d0] text-[#16a34a] px-5 py-4 rounded-[2px] mb-6 text-xs font-medium flex items-center gap-3">
+      <p><%= success %></p>
+    </div>
+  <% } %>
+
+  <!-- Form Login -->
+  <form method="POST" action="/login" class="w-full max-w-md flex flex-col gap-4">
+    
+    <!-- Email/Username -->
+    <div>
+      <label class="block text-xs font-medium text-gray-800 mb-2 px-1">Email atau Username</label>
+      <input name="login" type="text" placeholder="username" 
+             class="w-full bg-[#f9f9f9] border border-[#dddddd] rounded-[2px] px-4 py-3 text-xs font-medium text-gray-800 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-xs placeholder:font-medium placeholder:text-gray-400" 
+             required autocomplete="username"
+             oninput="this.value = this.value.toLowerCase()">
+    </div>
+    
+    <!-- Password -->
+    <div>
+      <div class="flex items-center justify-between mb-2 px-1">
+        <label class="block text-xs font-medium text-gray-800">Password</label>
+        <a href="/forgot-password" class="text-xs font-medium text-blue-500 hover:underline transition-colors">Lupa Password?</a>
+      </div>
+      <div class="flex items-center bg-[#f9f9f9] border border-[#dddddd] rounded-[2px] transition-all focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+        <input id="passwordInput" name="password" type="password" placeholder="••••••••" 
+               class="flex-1 bg-transparent px-4 py-3 text-xs font-medium text-gray-800 outline-none w-full placeholder:text-xs placeholder:font-medium placeholder:text-gray-400" 
+               required autocomplete="current-password">
+        <button type="button" onclick="togglePassword()" class="w-9 h-9 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center shrink-0 mr-1">
+          <i id="toggleIcon" class="far fa-eye text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tombol Masuk -->
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white w-full py-3 rounded-[2px] text-xs font-medium shadow-sm transition-all flex items-center justify-center gap-2 mt-2">
+      Masuk <i class="fas fa-arrow-right text-xs"></i>
+    </button>
+  </form>
+
+  <!-- Link Daftar -->
+  <p class="mt-6 text-center text-xs font-medium text-gray-700 max-w-md w-full">
+    Belum punya akun? 
+    <a href="/register" class="text-blue-500 font-medium hover:underline transition-colors">Daftar sekarang</a>
+  </p>
+</div>
+
+<script>
+  function togglePassword() {
+    const passwordInput = document.getElementById('passwordInput');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      passwordInput.type = 'password';
+      toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  }
+</script>
+
+<%- include('partials/footer') %>
